@@ -8,8 +8,8 @@ import Typography from '@mui/material/Typography';
 import axios from 'axios';
 import Grid from '@mui/material/Grid';
 import Chip from '@mui/material/Chip';
+import { Button, Pagination } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { Button } from '@mui/material';
 
 interface Product {
   id: number;
@@ -30,28 +30,34 @@ const StyledCard = styled(Card)(({ theme }) => ({
   },
 }));
 
-
 const StyledCardMedia = styled(CardMedia)(({ theme }) => ({
   height: 200,
 }));
 
 const Products = (): JSX.Element => {
-
   const [productsData, setProductsData] = useState<Product[]>([]);
-
+  const [page, setPage] = useState(1);
+  const productsPerPage = 6; 
   useEffect(() => {
     axios.get('https://dummyjson.com/products')
       .then((res) => {
-        setProductsData(res.data.products); 
+        setProductsData(res.data.products);
       })
       .catch(err => console.log(err));
   }, []);
+
+  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+  };
+
+  const displayedProducts = productsData.slice((page - 1) * productsPerPage, page * productsPerPage);
+  const pageCount = Math.ceil(productsData.length / productsPerPage);
 
   return (
     <Main>
       <Box sx={{ padding: 4 }}>
         <Grid container spacing={3}>
-          {productsData.map((product) => (
+          {displayedProducts.map((product) => (
             <Grid
               key={product.id}
               item
@@ -61,26 +67,33 @@ const Products = (): JSX.Element => {
             >
               <StyledCard>
                 <StyledCardMedia
-                  image={product.images[0]}
+                  image={product.images[0] || '/path/to/fallback-image.jpg'} 
                   title={product.title}
                 />
                 <CardContent>
-                  <Typography gutterBottom variant="h6" color="CaptionText"  component="div">
+                  <Typography gutterBottom variant="h6" color="CaptionText" component="div">
                     {product.title}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     {product.description}
                   </Typography>
-                  <Box sx={{ marginTop: 1 , display: 'flex', alignItems: 'center',  gap: 17}}>
-                    <Chip label={product.price + ' $'}  color="default" />
+                  <Box sx={{ marginTop: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Chip label={product.price + ' $'} color="default" />
                     <Button variant="contained" color="primary">Buy</Button>
                   </Box>
-                 
                 </CardContent>
               </StyledCard>
             </Grid>
           ))}
         </Grid>
+        <Box sx={{ display: 'flex', justifyContent: 'center', marginTop: 4 }}>
+          <Pagination
+            count={pageCount}
+            page={page}
+            onChange={handlePageChange}
+            color="primary"
+          />
+        </Box>
       </Box>
     </Main>
   );
